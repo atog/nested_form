@@ -4,6 +4,12 @@
     this.removeFields = $.proxy(this.removeFields, this);
   };
 
+  String.prototype.replaceAt=function(index, characters) {
+    var before = this.substr(0, index);
+    var after = this.substr(index+1);
+    return before + characters + after;
+  };
+
   NestedFormEvents.prototype = {
     addFields: function(e) {
       // Setup
@@ -30,17 +36,37 @@
         var parentNames = context.match(/[a-z_]+_attributes(?=\]\[(new_)?\d+\])/g) || [];
         var parentIds   = context.match(/[0-9]+/g) || [];
 
-        for(var i = 0; i < parentNames.length; i++) {
-          if(parentIds[i]) {
-            content = content.replace(
-              new RegExp('(_' + parentNames[i] + ')_.+?_', 'g'),
-              '$1_' + parentIds[i] + '_');
-
-            content = content.replace(
-              new RegExp('(\\[' + parentNames[i] + '\\])\\[.+?\\]', 'g'),
-              '$1[' + parentIds[i] + ']');
-          }
+        var index = 0;
+        for(var j=0; j<2;j++) {
+            for(var i=0; i<parentNames.length; i++) {
+              index = content.indexOf(parentNames[i], index);
+              if(index > -1) {
+                index += parentNames[i].length+1;
+                content = content.replaceAt(index, parentIds[i]);
+              }
+            }
+            index = content.indexOf("name=", index);
+            for(var i=0; i<parentNames.length; i++) {
+              index = content.indexOf(parentNames[i], index);
+              if(index > -1) {
+                index += parentNames[i].length+2;
+                content = content.replaceAt(index, parentIds[i]);
+              }
+            }
+            index = content.indexOf("/>", index);
         }
+
+        // for(var i = 0; i < parentNames.length; i++) {
+        //   if(parentIds[i]) {
+        //     content = content.replace(
+        //       new RegExp('(_' + parentNames[i] + ')_.+?_', 'g'),
+        //       '$1_' + parentIds[i] + '_');
+
+        //     content = content.replace(
+        //       new RegExp('(\\[' + parentNames[i] + '\\])\\[.+?\\]', 'g'),
+        //       '$1[' + parentIds[i] + ']');
+        //   }
+        // }
       }
 
       // Make a unique ID for the new child
@@ -118,3 +144,4 @@
                 return $();//nothing found
         };
 })(jQuery);
+
